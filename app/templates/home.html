@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Climate Chamber Control{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="input-section">
+        <h1 style="text-align: center;">Climate Chamber Control</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="option-buttons">
+            <div class="control-option">
+                <h2>Quick Temperature Set</h2>
+                <form action="{{ url_for('main.submit_temperature') }}" method="post" class="vertical-form">
+                    <input type="number" name="temperature" 
+                           placeholder="Enter temperature (°C)"
+                           step="0.1" required>
+                    <button type="submit" class="full-width">Set Constant Temperature</button>
+                </form>
+            </div>
+
+            <div class="separator">OR</div>
+
+            <div class="control-option">
+                <h2>Custom Graph Setup</h2>
+                <button onclick="window.location.href='/setup-graph';"
+                        class="full-width">
+                    Create Custom Temperature Profile
+                </button>
+            </div>
+        </div>
+        <div class="config-button-group">
+            <button onclick="window.location.href='{{ url_for('main.edit_config') }}'"
+                    class="full-width config-button">
+                ⚙️ Edit System Configuration
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

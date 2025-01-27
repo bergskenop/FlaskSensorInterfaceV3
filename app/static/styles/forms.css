@@ -1,0 +1,27 @@
+/* Original form elements */
+input[type="text"],
+input[type="number"],
+select {
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.vertical-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.config-field label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: bold;
+    color: #34495e;
+}
+
+input[type="file"] {
+    margin-top: 10px;
+}

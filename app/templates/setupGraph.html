@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Climate Chamber Graph Editor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="input-section">
+        <h1>Climate Chamber Graph Editor</h1>
+        <form onsubmit="submitPoint(event)">
+            <input type="text" id="pointInput" placeholder="Enter point as x,y or click graph." required>
+        </form>
+        <div class="half-width-buttons">
+            <button id="submit">Add Point</button>
+            <button id="undoButton">Undo Last Point</button>
+        </div>
+        <button id="clearPoints"  class="full-width">Clear Points</button>
+        <button id="sendPointsToServer" class="full-width">Parse graph to server</button>
+        <label for="interpolationMethod">Interpolation Method: </label>
+        <select id="interpolationMethod" onchange="updateChart()">
+            <option value="linear" selected>Linear</option>
+            <option value="monotone">Monotone</option>
+        </select>
+        <label for="xRange">X-Range (minutes): </label>
+        <input type="number" id="xRange" value="60" min="1" step="1" onchange="updateXRange()">
+        <div class="half-width-buttons">
+            <button id="startMeasurementButton">Start Measurement</button>
+            <button id="stopMeasurementButton">Stop Measurement</button>
+        </div>
+        <div class="button-group">
+            <button onclick="exportGraphToJSON()">Export to JSON</button>
+            <input type="file" id="importJSON" accept=".json" onchange="importGraphFromJSON(event)">
+        </div>
+    </div>
+    <div class="graph-section">
+        <canvas id="myChart" width="600" height="400"></canvas>
+        <div id="connectionStatusCircle" class="status-circle"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+<script src="{{ url_for('static', filename='js/setup-graph.js') }}" type="module"></script>
+{% endblock %}

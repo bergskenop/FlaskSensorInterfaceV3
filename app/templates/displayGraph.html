@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Graph and Control Panel{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="input-section">
+        <h2>Control Panel</h2>
+        <form class="vertical-form">
+            <label for="temperature">Set Temperature:</label>
+            <input type="number" id="temperature" name="temperature" placeholder="Enter temperature">
+
+            <label for="interpolation">Interpolation Method:</label>
+            <select id="interpolation" name="interpolation">
+                <option value="linear">Linear</option>
+                <option value="cubic">Cubic</option>
+                <option value="nearest">Nearest</option>
+            </select>
+
+            <label for="manualPoint">Add Point (x, y):</label>
+            <input type="text" id="manualPoint" name="manualPoint" placeholder="Enter point (e.g., 10,20)">
+
+            <button type="button" id="updateGraph">Update Graph</button>
+        </form>
+    </div>
+
+    <div class="graph-section">
+        <canvas id="newGraph"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/display-graph.js') }}" type="module"></script>
+{% endblock %}
