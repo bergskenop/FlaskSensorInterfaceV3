@@ -12,21 +12,48 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function handleUpdateGraph() {
-    // Original update logic
-    const temperature = parseFloat(document.getElementById('temperature').value);
-    const manualPoint = document.getElementById('manualPoint').value.split(',').map(Number);
+  const temperature = parseFloat(document.getElementById('temperature').value);
+  const manualPoint = document.getElementById('manualPoint').value.split(',').map(Number);
 
-    if (!isNaN(temperature)) {
-        const newX = chartInstance.data.labels.length;
-        chartInstance.data.labels.push(newX);
-        chartInstance.data.datasets[0].data.push({ x: newX, y: temperature });
-    }
+  if (!isNaN(temperature)) {
+    const newX = chartInstance.data.labels.length;
+    chartInstance.data.labels.push(newX);
 
-    if (manualPoint.length === 2) {
-        chartInstance.data.datasets[0].data.push({ x: manualPoint[0], y: manualPoint[1] });
-    }
+    // Add a horizontal line annotation
+    chartInstance.options.plugins.annotation.annotations[`line${newX}`] = {
+      type: 'line',
+      yMin: temperature,
+      yMax: temperature,
+      borderColor: getRandomColor(),
+      borderWidth: 2,
+      label: {
+        content: `Temperature at ${temperature}°C`,
+        enabled: true,
+        position: 'end'
+      }
+    };
+  }
 
-    chartInstance.update();
+  if (manualPoint.length === 2) {
+    const [x, y] = manualPoint;
+    chartInstance.data.datasets[0].data.push({ x, y });
+
+    // Add a horizontal line annotation for the manual point
+    chartInstance.options.plugins.annotation.annotations[`manualLine${x}`] = {
+      type: 'line',
+      yMin: y,
+      yMax: y,
+      borderColor: getRandomColor(),
+      borderWidth: 2,
+      label: {
+        content: `Manual Point at ${y}°C`,
+        enabled: true,
+        position: 'end'
+      }
+    };
+  }
+
+  chartInstance.update();
 }
 
 function renderGraph(graphData) {
