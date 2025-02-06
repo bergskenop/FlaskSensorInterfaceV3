@@ -56,14 +56,68 @@ function handleUpdateGraph() {
   chartInstance.update();
 }
 
-function renderGraph(graphData) {
+function renderGraph(response) {
     const ctx = document.getElementById('newGraph').getContext('2d');
-    chartInstance = createBaseChart(ctx, {
-        labels: graphData.map((_, i) => i),
-        datasets: [{
-            label: 'Graph Data',
-            data: graphData,
-            borderColor: getRandomColor()
-        }]
-    });
+    const graphData = response.data;
+    const config = response.config;
+
+    if (graphData.length === 1) {
+        const temperature = graphData[0].y;
+        const maxY = temperature * 1.5;
+        const xRange = Math.abs(1.5 * config.max_rico * (temperature - 20));
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        min: 0,
+                        max: xRange,
+                        title: { display: true, text: 'Time (seconds)' }
+                    },
+                    y: {
+                        min: 0,
+                        max: maxY,
+                        title: { display: true, text: 'Temperature (°C)' }
+                    }
+                },
+                plugins: {
+                    annotation: {
+                        annotations: {
+                            targetTemp: {
+                                type: 'line',
+                                yMin: temperature,
+                                yMax: temperature,
+                                borderColor: getRandomColor(),
+                                borderWidth: 2,
+                                label: {
+                                    content: `Target Temperature: ${temperature}°C`,
+                                    enabled: true,
+                                    position: 'end'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        // Original multi-point graph rendering
+        chartInstance = createBaseChart(ctx, {
+            labels: graphData.map((_, i) => i),
+            datasets: [{
+                label: 'Graph Data',
+                data: graphData,
+                borderColor: getRandomColor()
+            }]
+        });
+    }
+
+    chartInstance.update();
 }

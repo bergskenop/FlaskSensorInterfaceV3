@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template, jsonify, redirect, url_for, request
+
+from app.services.config import load_config
 from app.services.state import app_state  # Absolute import
 from app.models.graph import Graph        # Absolute import
 
@@ -36,4 +38,10 @@ def display_graph():
 
 @graph_bp.route('/get-stored-graph-data', methods=['GET'])
 def get_stored_graph_data():
-    return jsonify(app_state.data_points)
+    config = load_config(app_state.config_path)
+    return jsonify({
+        'data': app_state.data_points,
+        'config': {
+            'max_rico': config.get('max_rico', {}).get('value')
+        }
+    })
