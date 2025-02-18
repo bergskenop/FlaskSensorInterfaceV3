@@ -13,7 +13,7 @@ class GraphConfig:
 
 class Graph:
     """Main graph model replicating original helper.py functionality"""
-    def __init__(self, setpoints, config_path="graph_config.json"):
+    def __init__(self, setpoints, config_path="app/config/graph_config.json"):
         self.setpoints = setpoints
         self.config = self._load_config(Path(config_path))
         self.valid_dataset = False

@@ -1,10 +1,34 @@
-from flask import Blueprint, jsonify, request
+import json
+
+from flask import Blueprint, jsonify, request, Response
 from app.services.state import app_state
 import time
 import subprocess
 
 sensor_bp = Blueprint('sensor', __name__)
+SENSOR_DATA_PATH = 'app/config/sensor_data.json'
 
+def read_sensor_data():
+    """Reads the latest sensor data from JSON."""
+    with open(SENSOR_DATA_PATH, 'r') as file:
+        return json.load(file)
+
+def sensor_data_generator():
+    """Generator function for Server-Sent Events (SSE)."""
+    while True:
+        data = read_sensor_data()
+        yield f"data: {json.dumps(data)}\n\n"
+        time.sleep(2)
+
+@sensor_bp.route('/stream')
+def stream():
+    """Route that streams sensor data to the frontend."""
+    return Response(sensor_data_generator(), mimetype='text/event-stream')
+
+@sensor_bp.route('/start_sensors', methods=['POST'])
+def start_sensors():
+    """Simulate starting the sensor reading process."""
+    return jsonify({'status': 'sensors started'})
 
 @sensor_bp.route('/start-sensor-script', methods=['POST'])
 def start_sensor_script():

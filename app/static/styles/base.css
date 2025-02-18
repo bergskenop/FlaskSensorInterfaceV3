@@ -1,9 +1,25 @@
+:root {
+    --background-color: #f4f4f4;
+    --card-background: #fff;
+    --text-color: #333;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode colors */
+.dark-mode {
+    --background-color: #1a1a1a;
+    --card-background: #2d2d2d;
+    --text-color: #e0e0e0;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
 /* Original general styles */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background-color: var(--background-color);
     margin: 0;
     padding: 0;
+    color: var(--text-color);
 }
 
 .container {
@@ -14,10 +30,10 @@ body {
 }
 
 .input-section {
-    background-color: #fff;
+    background-color: var(--card-background);
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px var(--shadow-color);
     width: 25%;
 }
 
