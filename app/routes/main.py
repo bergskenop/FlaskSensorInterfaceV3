@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
+
+from app.models.graph import Graph
 from app.services.state import app_state  # Changed from relative import
 from app.services.config import load_config
 import json
@@ -56,7 +58,7 @@ def submit_temperature():
             flash(f'Temperature must be between {min_temp}°C and {max_temp}°C', 'error')
             return redirect(url_for('main.index'))
 
-        app_state.data_points = [{"x": 0, "y": temperature}]
+        app_state.desired_flow_graph = Graph([(0, temperature)])
         flash(f'Temperature set to {temperature}°C', 'success')
         return redirect(url_for('graph.display_graph'))
 

@@ -1,7 +1,12 @@
-import { createBaseChart, getRandomColor } from './chart-utils.js';
+import { getRandomColor } from './chart-utils.js';
 
 let chartInstance = null;
-let setTemp = 0;
+let datasets = [];
+let isCycleRunning = false;
+let eventSource = null;  // Store the EventSource instance
+let startTime = null;
+let availableSensors = new Set();  // Keep track of available sensors
+let selectedSensors = new Set();  // Keep track of selected sensors
 
 document.addEventListener('DOMContentLoaded', () => {
   // Load any stored graph data (if available) and render an initial chart.
@@ -10,223 +15,291 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(renderGraph)
     .catch(console.error);
 
-  // When "Start cycle" is clicked, begin the sensor stream.
-  document.getElementById('StartCycle').addEventListener('click', startSensorStream);
-  // When "Update Graph" is clicked, apply a manual update.
-  document.getElementById('updateGraph').addEventListener('click', handleManualUpdateGraph);
+  // When "Start/Stop cycle" is clicked, toggle the sensor stream.
+  const cycleButton = document.getElementById('StartCycle');
+  cycleButton.addEventListener('click', toggleSensorStream);
 });
 
 /**
- * Starts the sensor stream by calling the server endpoint and then opening an SSE.
+ * Formats a timestamp in HH:mm:ss format
+ * @param {Date} date - The date to format
+ * @returns {string} Formatted time string
  */
-function startSensorStream() {
-  fetch('/start_sensors', { method: 'POST' })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+function formatTime(date) {
+  return date.toTimeString().split(' ')[0];
+}
+
+/**
+ * Renders the initial graph using pre-stored graph data.
+ */
+function renderGraph(response) {
+  const ctx = document.getElementById('newGraph').getContext('2d');
+  const {desired_path: desiredPath, data: graphData, config } = response;
+
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  // Create the chart with appropriate axis ranges
+  const maxTemperature = Math.max(...desiredPath.map(point => point.y)) * 1.5;
+  const maxY = maxTemperature;
+  const currentTime = new Date();
+  const startX = 0;
+  const maxX = Math.max(...desiredPath.map(point => point.x));
+
+  const options = {
+    x: {
+      type: 'linear',
+      position: 'bottom',
+      min: startX,
+      max: maxX,
+      ticks: {
+        callback: function(value) {
+          // Convert the x-value (seconds) to a time string
+          const timestamp = new Date(currentTime.getTime() + value * 1000);
+          return formatTime(timestamp);
+        }
       }
-      return response.json();
-    })
-    .then(result => {
-      console.log("Sensors started:", result);
-      // Initialize the chart and open the SSE connection.
-      initializeChartAndStream();
-    })
-    .catch(error => console.error("Error starting sensor stream:", error));
+    },
+    y: {
+      min: 0,
+      max: maxY
+    }
+  };
+
+  chartInstance = createChart(ctx, datasets, options);
+
+  // Add single-point desired temperature line if applicable
+  if (desiredPath){
+    if ((!Array.isArray(desiredPath) || desiredPath.length === 1)) {
+        const desiredTemp = Array.isArray(desiredPath) ? desiredPath[0].y : desiredPath.y;
+        chartInstance.options.plugins.annotation.annotations.desiredLine = {
+          type: 'line',
+          yMin: desiredTemp,
+          yMax: desiredTemp,
+          borderColor: 'red',
+          borderWidth: 2,
+          label: {
+            content: `Desired Temperature: ${desiredTemp}°C`,
+            enabled: true,
+            position: 'end'
+          }
+        };
+    }
+    else {
+      // Add multiple points as a dataset to existing chart
+      chartInstance.data.datasets.push({
+        label: 'Desired Graph',
+        data: desiredPath.map(point => ({ x: point.x, y: point.y })),
+        borderColor: 'red',
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 1
+      });
+    }
+  }
+
+  chartInstance.update();
+}
+
+/**
+ * Toggles the sensor stream between start and stop states.
+ */
+function toggleSensorStream() {
+  const cycleButton = document.getElementById('StartCycle');
+  
+  if (!isCycleRunning) {
+    fetch('/start_sensors', { method: 'POST' })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(result => {
+        console.log("Sensors started:", result);
+        isCycleRunning = true;
+        cycleButton.textContent = 'Stop Cycle';
+        startTime = Date.now();
+        initializeStream();
+      })
+      .catch(error => {
+        console.error("Error starting sensor stream:", error);
+        isCycleRunning = false;
+        cycleButton.textContent = 'Start Cycle';
+      });
+  } else {
+    if (eventSource) {
+      eventSource.close();  // Close the EventSource connection
+    }
+    
+    fetch('/stop_sensors', { method: 'POST' })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(result => {
+        console.log("Sensors stopped:", result);
+        isCycleRunning = false;
+        cycleButton.textContent = 'Start Cycle';
+      })
+      .catch(error => {
+        console.error("Error stopping sensor stream:", error);
+      });
+  }
 }
 
 /**
  * Initializes the chart and sets up the sensor data streaming.
  */
-function initializeChartAndStream() {
-  const ctx = document.getElementById('newGraph').getContext('2d');
-
-  // If a chart instance already exists, destroy it first.
-  if (chartInstance) {
-    chartInstance.destroy();
+function initializeStream() {
+  if (eventSource) {
+    eventSource.close();  // Close any existing connection
   }
 
-  chartInstance = new Chart(ctx, {
+  startTime = Date.now();
+  eventSource = new EventSource('/stream');
+  
+  eventSource.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    
+    // Check if we received a stop signal
+    if (data.status === 'stopped') {
+      eventSource.close();
+      return;
+    }
+
+    // Update the sensor list
+    updateSensorList(data);
+
+    // Update chart with new data
+    if (chartInstance) {
+      const elapsedSeconds = (Date.now() - startTime) / 1000;
+      const timestamp = new Date();
+
+      // Update each selected sensor
+      selectedSensors.forEach(sensorName => {
+        if (data[sensorName] !== undefined) {
+          // Find or create dataset for this sensor
+          let dataset = chartInstance.data.datasets.find(ds => ds.label === sensorName);
+          if (!dataset) {
+            dataset = {
+              label: sensorName,
+              data: [],
+              borderColor: getRandomColor(),
+              fill: false,
+              pointRadius: 1
+            };
+            chartInstance.data.datasets.push(dataset);
+          }
+
+          dataset.data.push({
+            x: elapsedSeconds,
+            y: data[sensorName]
+          });
+        }
+      });
+
+      // Update x-axis labels
+      chartInstance.options.x.ticks.callback = function(value) {
+        const tickTime = new Date(startTime + value * 1000);
+        return formatTime(tickTime);
+      };
+
+      chartInstance.update();
+    }
+  };
+
+  eventSource.onerror = function(error) {
+    console.error('EventSource failed:', error);
+    eventSource.close();
+    isCycleRunning = false;
+    document.getElementById('StartCycle').textContent = 'Start Cycle';
+  };
+}
+
+/**
+ * Updates the sensor list in the UI
+ * @param {Object} data - The sensor data object
+ */
+function updateSensorList(data) {
+  // Get all sensor names from the current data
+  const currentSensors = new Set(Object.keys(data).filter(key => 
+    // Only include keys that have numeric values (sensors)
+    typeof data[key] === 'number'
+  ));
+  
+  // Remove sensors that are no longer present
+  for (const sensor of availableSensors) {
+    if (!currentSensors.has(sensor)) {
+      availableSensors.delete(sensor);
+      selectedSensors.delete(sensor);
+    }
+  }
+  
+  // Add new sensors
+  currentSensors.forEach(sensor => availableSensors.add(sensor));
+  
+  // Get the sensor list element
+  const sensorList = document.getElementById('sensorList');
+  
+  // Update the list to reflect current sensors
+  sensorList.innerHTML = '';
+  
+  // Add each sensor to the list
+  Array.from(availableSensors).sort().forEach(sensorName => {
+    const div = document.createElement('div');
+    div.className = 'sensor-checkbox';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = sensorName;
+    checkbox.checked = selectedSensors.has(sensorName);
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        selectedSensors.add(sensorName);
+      } else {
+        selectedSensors.delete(sensorName);
+      }
+      // We'll add visualization logic here later
+    });
+    
+    const label = document.createElement('label');
+    label.htmlFor = sensorName;
+    label.textContent = sensorName;
+    
+    div.appendChild(checkbox);
+    div.appendChild(label);
+    sensorList.appendChild(div);
+  });
+}
+
+/**
+ * Creates a new Chart.js instance with the specified configuration.
+ */
+function createChart(ctx, datasets = [], options = {}) {
+  return new Chart(ctx, {
     type: 'line',
-    data: {
-      labels: [],
-      datasets: [
-        { label: 'Sensor 1', data: [], borderColor: getRandomColor(), fill: false },
-        { label: 'Sensor 2', data: [], borderColor: getRandomColor(), fill: false },
-        { label: 'Sensor 3', data: [], borderColor: getRandomColor(), fill: false },
-        { label: 'Sensor 4', data: [], borderColor: getRandomColor(), fill: false }
-      ]
-    },
+    data: { labels: [], datasets },
     options: {
       responsive: true,
       scales: {
-        x: { title: { display: true, text: 'Time' } },
-        y: { title: { display: true, text: 'Temperature (°C)' } }
+        x: {
+          title: { display: true, text: 'Time' },
+          ...options.x
+        },
+        y: {
+          title: { display: true, text: 'Temperature (°C)' },
+          ...options.y
+        }
+      },
+      plugins: {
+        annotation: {
+          annotations: {}
+        }
       }
     }
   });
-
-  // Open an EventSource connection to stream sensor data.
-  const eventSource = new EventSource('/stream');
-  eventSource.onmessage = function (event) {
-    const sensorData = JSON.parse(event.data);
-    const currentTime = new Date().toLocaleTimeString();
-
-    // Append the current time as label and add sensor data to each dataset.
-    chartInstance.data.labels.push(currentTime);
-    chartInstance.data.datasets[0].data.push(sensorData.sensor1);
-    chartInstance.data.datasets[1].data.push(sensorData.sensor2);
-    chartInstance.data.datasets[2].data.push(sensorData.sensor3);
-    chartInstance.data.datasets[3].data.push(sensorData.sensor4);
-    chartInstance.update();
-  };
-  chartInstance.options.plugins.annotation.annotations = {
-      type: 'line',
-      yMin: setTemp,
-      yMax: setTemp,
-      borderColor: getRandomColor(),
-      borderWidth: 2,
-      label: {
-        content: `Temperature at ${setTemp}°C`,
-        enabled: true,
-        position: 'end'
-      }
-    };
-
-  eventSource.onerror = function (error) {
-    console.error("EventSource error:", error);
-    eventSource.close();
-  };
-
-  // Disable the Start cycle button so the stream is not restarted.
-  document.getElementById('StartCycle').disabled = true;
-}
-
-/**
- * Handles manual updates to the graph using user input.
- */
-function handleManualUpdateGraph() {
-  const temperature = parseFloat(document.getElementById('temperature').value);
-  setTemp = temperature;
-  const manualPoint = document.getElementById('manualPoint').value.split(',').map(Number);
-
-  if (!isNaN(temperature)) {
-    const newX = chartInstance.data.labels.length;
-    chartInstance.data.labels.push(newX);
-
-    // Ensure the annotation plugin object exists.
-    if (!chartInstance.options.plugins.annotation) {
-      chartInstance.options.plugins.annotation = { annotations: {} };
-    }
-    chartInstance.options.plugins.annotation.annotations[`line${newX}`] = {
-      type: 'line',
-      yMin: temperature,
-      yMax: temperature,
-      borderColor: getRandomColor(),
-      borderWidth: 2,
-      label: {
-        content: `Temperature at ${temperature}°C`,
-        enabled: true,
-        position: 'end'
-      }
-    };
-  }
-
-  if (manualPoint.length === 2) {
-    const [x, y] = manualPoint;
-    // Adding a manual data point to the first dataset as an example.
-    chartInstance.data.datasets[0].data.push({ x, y });
-
-    if (!chartInstance.options.plugins.annotation) {
-      chartInstance.options.plugins.annotation = { annotations: {} };
-    }
-    chartInstance.options.plugins.annotation.annotations[`manualLine${x}`] = {
-      type: 'line',
-      yMin: y,
-      yMax: y,
-      borderColor: getRandomColor(),
-      borderWidth: 2,
-      label: {
-        content: `Manual Point at ${y}°C`,
-        enabled: true,
-        position: 'end'
-      }
-    };
-  }
-
-  chartInstance.update();
-}
-
-/**
- * Renders the graph using pre-stored graph data.
- */
-function renderGraph(response) {
-  const ctx = document.getElementById('newGraph').getContext('2d');
-  const graphData = response.data;
-  const config = response.config;
-
-  // If a chart instance already exists, destroy it.
-  if (chartInstance) {
-    chartInstance.destroy();
-  }
-
-  if (graphData.length === 1) {
-    const temperature = graphData[0].y;
-    const maxY = temperature * 1.5;
-    const xRange = Math.abs(1.5 * config.max_rico * (temperature - 20));
-
-    chartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        datasets: []
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: {
-            type: 'linear',
-            position: 'bottom',
-            min: 0,
-            max: xRange,
-            title: { display: true, text: 'Time (seconds)' }
-          },
-          y: {
-            min: 0,
-            max: maxY,
-            title: { display: true, text: 'Temperature (°C)' }
-          }
-        },
-        plugins: {
-          annotation: {
-            annotations: {
-              targetTemp: {
-                type: 'line',
-                yMin: temperature,
-                yMax: temperature,
-                borderColor: getRandomColor(),
-                borderWidth: 2,
-                label: {
-                  content: `Target Temperature: ${temperature}°C`,
-                  enabled: true,
-                  position: 'end'
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-  } else {
-    // Original multi-point graph rendering.
-    chartInstance = createBaseChart(ctx, {
-      labels: graphData.map((_, i) => i),
-      datasets: [{
-        label: 'Graph Data',
-        data: graphData,
-        borderColor: getRandomColor()
-      }]
-    });
-  }
-
-  chartInstance.update();
 }

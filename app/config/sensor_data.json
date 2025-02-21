@@ -1,6 +1,7 @@
 {
-    "sensor1": 22.5,
-    "sensor2": 23.0,
-    "sensor3": 21.8,
-    "sensor4": 13.7
+    "ClimateChamber temperature": 22.5,
+    "sensor 1": 22.5,
+    "sensor 2": 23.0,
+    "sensor 3": 21.8,
+    "sensor 4": 13.7
 }

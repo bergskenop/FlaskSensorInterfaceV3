@@ -8,6 +8,7 @@ class AppState:
         self.sensor_lock = Lock()
         self.data_points = []
         self.desired_flow_graph = None
+        self.desired_flow_points = None
         self.start_time = None
         self.config_path = Path('app\config\graph_config.json')
 

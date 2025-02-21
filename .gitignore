@@ -1,2 +1,6 @@
 /.FlaskVenv/
+.idea
+*.pyc
+*.pyc
 /.idea
+*.pyc

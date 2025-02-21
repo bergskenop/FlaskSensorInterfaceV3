@@ -8,6 +8,9 @@ import subprocess
 sensor_bp = Blueprint('sensor', __name__)
 SENSOR_DATA_PATH = 'app/config/sensor_data.json'
 
+# Global flag to control the sensor loop
+should_continue = True
+
 def read_sensor_data():
     """Reads the latest sensor data from JSON."""
     with open(SENSOR_DATA_PATH, 'r') as file:
@@ -15,19 +18,25 @@ def read_sensor_data():
 
 def sensor_data_generator():
     """Generator function for Server-Sent Events (SSE)."""
-    while True:
+    global should_continue
+    while should_continue:
         data = read_sensor_data()
         yield f"data: {json.dumps(data)}\n\n"
         time.sleep(2)
+    yield "data: {\"status\": \"stopped\"}\n\n"  # Send final message before stopping
 
 @sensor_bp.route('/stream')
 def stream():
     """Route that streams sensor data to the frontend."""
+    global should_continue
+    should_continue = True
     return Response(sensor_data_generator(), mimetype='text/event-stream')
 
 @sensor_bp.route('/start_sensors', methods=['POST'])
 def start_sensors():
     """Simulate starting the sensor reading process."""
+    global should_continue
+    should_continue = True
     return jsonify({'status': 'sensors started'})
 
 @sensor_bp.route('/start-sensor-script', methods=['POST'])
@@ -65,3 +74,10 @@ def get_sensor_data():
 @sensor_bp.route('/start-measurement', methods=['GET'])
 def get_temperature():
     return jsonify({})  # Maintain original empty response
+
+@sensor_bp.route('/stop_sensors', methods=['POST'])
+def stop_sensors():
+    """Stop the sensor reading process."""
+    global should_continue
+    should_continue = False
+    return jsonify({'status': 'sensors stopped'})

@@ -17,14 +17,9 @@ def store_graph_data():
         if not graph_data:
             return jsonify({"error": "No data received"}), 400
 
-        if 'data' not in graph_data[0] or 'label' not in graph_data[0] or graph_data[0]["label"] != "Desired flow":
-            return jsonify({"error": "Invalid dataset: Missing or incorrect label."}), 400
+        tuple_list = [(point['x'], point['y']) for point in graph_data[0]['data']]
 
-        data_part = graph_data[0]["data"]
-        app_state.data_points = graph_data[0]["data"]
-        data_tuples = [(item["x"], item["y"]) for item in data_part]
-
-        app_state.desired_flow_graph = Graph(data_tuples)
+        app_state.desired_flow_graph = Graph(tuple_list)
         if app_state.desired_flow_graph.valid_dataset:
             return redirect(url_for('graph.display_graph'))
         return jsonify({"error": "Invalid dataset: Data does not meet required criteria."}), 400
@@ -39,7 +34,15 @@ def display_graph():
 @graph_bp.route('/get-stored-graph-data', methods=['GET'])
 def get_stored_graph_data():
     config = load_config(app_state.config_path)
+    
+    # Convert Graph object's setpoints to the format expected by frontend
+    desired_path = None
+    if app_state.desired_flow_graph:
+        # Convert tuples to {x, y} format
+        desired_path = [{"x": x, "y": y} for x, y in app_state.desired_flow_graph.setpoints]
+        
     return jsonify({
+        'desired_path': desired_path,
         'data': app_state.data_points,
         'config': {
             'max_rico': config.get('max_rico', {}).get('value')
