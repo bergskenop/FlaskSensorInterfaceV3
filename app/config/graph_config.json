@@ -25,5 +25,11 @@
         "value": 2,
         "unit": "degrees celcius/second",
         "_comment": "Handles how fast temperature can increase or drop. (Tends to be non linear)"
+    },
+    "sensor_read_delay": {
+        "name": "sensor_read_delay",
+        "value": 0.5,
+        "unit": "seconds",
+        "_comment": "Handles how fast temperature sensors are read out."
     }
 }

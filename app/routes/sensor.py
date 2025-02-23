@@ -7,11 +7,21 @@ import subprocess
 
 sensor_bp = Blueprint('sensor', __name__)
 SENSOR_DATA_PATH = 'app/config/sensor_data.json'
+GRAPH_CONFIG_PATH = 'app/config/graph_config.json'
 
 # Global flag to control the sensor loop
 should_continue = True
 
-def read_sensor_data():
+def get_sensor_read_delay():
+    """Gets the sensor read delay from the configuration file."""
+    try:
+        with open(GRAPH_CONFIG_PATH, 'r') as file:
+            config = json.load(file)
+            return config['sensor_read_delay']['value']
+    except (FileNotFoundError, KeyError, json.JSONDecodeError):
+        return 2  # Default delay if config can't be read
+
+def read_sensor_data_from_file():
     """Reads the latest sensor data from JSON."""
     with open(SENSOR_DATA_PATH, 'r') as file:
         return json.load(file)
@@ -19,10 +29,11 @@ def read_sensor_data():
 def sensor_data_generator():
     """Generator function for Server-Sent Events (SSE)."""
     global should_continue
+    delay = get_sensor_read_delay()
     while should_continue:
-        data = read_sensor_data()
+        data = read_sensor_data_from_file()
         yield f"data: {json.dumps(data)}\n\n"
-        time.sleep(2)
+        time.sleep(delay)
     yield "data: {\"status\": \"stopped\"}\n\n"  # Send final message before stopping
 
 @sensor_bp.route('/stream')
@@ -52,24 +63,6 @@ def start_sensor_script():
         return jsonify({"message": "Monitoring started"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-@sensor_bp.route('/api/sensor-data', methods=['POST'])
-def receive_sensor_data():
-    data = request.get_json()
-    with app_state.sensor_lock:
-        app_state.sensor_readings.append({
-            'x': data['elapsed'],
-            'y': data['temperature']
-        })
-    return jsonify({"message": "Data received"}), 200
-
-
-@sensor_bp.route('/get-sensor-data', methods=['GET'])
-def get_sensor_data():
-    with app_state.sensor_lock:
-        return jsonify(app_state.sensor_readings)
-
 
 @sensor_bp.route('/start-measurement', methods=['GET'])
 def get_temperature():

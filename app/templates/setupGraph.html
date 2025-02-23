@@ -15,7 +15,7 @@
         <button id="clearPoints"  class="full-width">Clear Points</button>
         <button id="sendPointsToServer" class="full-width">Parse graph to server</button>
         <label for="interpolationMethod">Interpolation Method: </label>
-        <select id="interpolationMethod" onchange="updateChart()">
+        <select id="interpolationMethod">
             <option value="linear" selected>Linear</option>
             <option value="monotone">Monotone</option>
         </select>
@@ -24,10 +24,6 @@
         <div class="half-width-buttons">
             <button id="startMeasurementButton">Start Measurement</button>
             <button id="stopMeasurementButton">Stop Measurement</button>
-        </div>
-        <div class="button-group">
-            <button onclick="exportGraphToJSON()">Export to JSON</button>
-            <input type="file" id="importJSON" accept=".json" onchange="importGraphFromJSON(event)">
         </div>
     </div>
     <div class="graph-section">
