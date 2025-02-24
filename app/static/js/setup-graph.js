@@ -2,7 +2,7 @@ const ctx = document.getElementById('myChart').getContext('2d');
 const points = [];
 const history = [];
 let startTime = null;
-let xRange = 30 * 60; // Default x-range in seconds (12 hours)
+let xRange = 2 * 60; // Default x-range in seconds (12 hours)
 let unsavedChanges = false;
 let measurementInterval = null;
 
