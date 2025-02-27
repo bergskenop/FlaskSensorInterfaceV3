@@ -22,6 +22,9 @@ button:disabled {
 .full-width {
     width: 100%;
 }
+.half-width {
+    width: 100%;
+}
 
 .config-button {
     background-color: #6c757d !important;

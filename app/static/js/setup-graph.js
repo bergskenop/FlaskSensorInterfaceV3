@@ -52,8 +52,6 @@ document.getElementById('submit').addEventListener('click', submitPoint);
 document.getElementById('interpolationMethod').addEventListener('change', updateChart);
 document.getElementById('undoButton').addEventListener('click', undoLastPoint);
 document.getElementById('clearPoints').addEventListener('click', clearPoints);
-document.getElementById('startMeasurementButton').addEventListener('click', startMeasurement);
-document.getElementById('stopMeasurementButton').addEventListener('click', stopMeasurement);
 document.getElementById('sendPointsToServer').addEventListener('click', sendPointsToServer);
 document.getElementById('pointInput').addEventListener('input', updateUndoButtonState);
 
@@ -142,49 +140,6 @@ function clearPoints() {
     updateChart();
     updateUndoButtonState();
     unsavedChanges = false;
-}
-
-function startMeasurement() {
-    startTime = new Date().getTime();
-    measurementInterval = setInterval(() => {
-        fetch('/start-measurement')
-            .then(response => response.json())
-            .then(data => {
-                const currentTime = new Date().getTime();
-                const elapsedTime = (currentTime - startTime) / 1000; // In seconds
-
-                for (const [sensor, temperature] of Object.entries(data)) {
-                    let dataset = myChart.data.datasets.find(ds => ds.label === sensor);
-                    if (!dataset) {
-                        dataset = {
-                            label: sensor,
-                            data: [],
-                            borderColor: getRandomColor(),
-                            borderWidth: 1,
-                            fill: false,
-                            cubicInterpolationMode: 'default',
-                            pointStyle: 'none',
-                            radius: 0
-                        };
-                        myChart.data.datasets.push(dataset);
-                    }
-                    dataset.data.push({ x: elapsedTime, y: temperature });
-                }
-                updateChart();
-            })
-            .catch(error => {
-                console.error('Error fetching sensor data:', error);
-                clearInterval(measurementInterval);
-                measurementInterval = null;
-            });
-    }, 5000);
-}
-
-function stopMeasurement() {
-    if (measurementInterval) {
-        clearInterval(measurementInterval);
-        measurementInterval = null;
-    }
 }
 
 function exportGraphToJSON() {
