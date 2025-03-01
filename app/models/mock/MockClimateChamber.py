@@ -1,10 +1,9 @@
+from app.models.interfaces.IClimateChamber import *
 from app.models.mock.MockGPIO import MockGPIO
 from app.models.mock.MockPWM import MockPWM
-from app.models.config.ControlConfig import ControlConfig
 
-
-class MockClimateChamber:
-    _instance = None  # Singleton instance
+class MockClimateChamber(IClimateChamber):
+    _instance = None
 
     HEAT_PIN = 18
     COOL_PIN = 23
@@ -14,11 +13,9 @@ class MockClimateChamber:
         if cls._instance is None:
             cls._instance = super(MockClimateChamber, cls).__new__(cls)
             cls._instance._initialize_pwm()
-            cls._instance.config = ControlConfig()
         return cls._instance
 
     def _initialize_pwm(self):
-        """Initialize mock PWM for testing."""
         print("\nInitializing ClimateChamber with MockPWM and MockGPIO...")
         MockGPIO.setmode(MockGPIO.BCM)
         MockGPIO.setup(self.HEAT_PIN, MockGPIO.OUT)
@@ -31,26 +28,15 @@ class MockClimateChamber:
         self.cool_pwm.start(0)
 
     def set_heating(self, power: float):
-        """Set mock heating power."""
         power = max(0, min(100, power))
-        print("\nClimateChamber: Setting heating power")
-        self.heat_pwm.ChangeDutyCycle(power)
+        print(f"\nMockClimateChamber: Setting heating power to {power}%")
 
     def set_cooling(self, power: float):
-        """Set mock cooling power."""
         power = max(0, min(100, power))
-        print("\nClimateChamber: Setting cooling power")
-        self.cool_pwm.ChangeDutyCycle(power)
+        print(f"\nMockClimateChamber: Setting cooling power to {power}%")
 
     def stop_all(self):
-        """Stop both heating and cooling."""
-        print("\nClimateChamber: Stopping all processes")
-        self.heat_pwm.ChangeDutyCycle(0)
-        self.cool_pwm.ChangeDutyCycle(0)
+        print("\nMockClimateChamber: Stopping all processes")
 
     def cleanup(self):
-        """Cleanup mock GPIO."""
-        print("\nClimateChamber: Cleaning up resources")
-        self.heat_pwm.stop()
-        self.cool_pwm.stop()
-        MockGPIO.cleanup()
+        print("\nMockClimateChamber: Cleaning up resources")

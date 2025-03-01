@@ -2,7 +2,7 @@
     "_comment": "This file contains the parameters for the graph used to set the desired temperature profile within the climate chamber.",
     "max_points": {
         "name": "max_points",
-        "value": 100,
+        "value": 101,
         "_comment": "Amount of points set by the user onto the graph."
     },
     "min_x": {
@@ -22,7 +22,7 @@
     },
     "max_rico": {
         "name": "max_rico",
-        "value": 2,
+        "value": 4,
         "unit": "degrees celcius/second",
         "_comment": "Handles how fast temperature can increase or drop. (Tends to be non linear)"
     }

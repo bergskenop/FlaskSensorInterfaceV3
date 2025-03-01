@@ -187,19 +187,6 @@ function getRandomColor() {
     return '#' + Math.floor(Math.random() * 16777215).toString(16);
 }
 
-function checkServerConnection() {
-    fetch('/status')
-        .then(response => {
-            const statusElement = document.getElementById('connectionStatusCircle');
-            statusElement.style.animation = response.ok ? 'pulseGreen 1.5s infinite' : 'pulseRed 1.5s infinite';
-        })
-        .catch(() => {
-            const statusElement = document.getElementById('connectionStatusCircle');
-            statusElement.style.animation = 'pulseRed 1.5s infinite';
-        });
-}
-
-setInterval(checkServerConnection, 5000);
 
 function getGraphData() {
     return myChart.data.datasets.map(dataset => ({

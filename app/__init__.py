@@ -11,8 +11,8 @@ def create_app():
 
     # Absolute imports
     from app.routes.main import main_bp
-    from app.routes.graph import graph_bp
-    from app.routes.sensor import sensor_bp
+    from app.routes.setup_graph import graph_bp
+    from app.routes.climate_chamber_control import sensor_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(graph_bp)

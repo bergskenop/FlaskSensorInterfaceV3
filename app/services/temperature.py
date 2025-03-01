@@ -75,7 +75,8 @@ class TemperatureService:
             
             if not is_valid:
                 return False, f"Invalid dataset: {message}", None
-                
+
+            app_state.desired_flow_graph = graph
             return True, "Temperature profile set successfully", graph
             
         except (KeyError, TypeError, ValueError) as e:
