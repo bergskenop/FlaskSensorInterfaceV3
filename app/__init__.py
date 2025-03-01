@@ -1,5 +1,8 @@
 import os
 from flask import Flask
+import app.services.state as state
+
+app_state = state.AppState()
 
 def create_app():
     app = Flask(__name__, static_url_path='/static')

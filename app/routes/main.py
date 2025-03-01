@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-
-from app.services.state import app_state
+from app import app_state
 from app.services.config import load_config, save_config
 from app.services.temperature import temperature_service
 
@@ -28,7 +27,7 @@ def edit_config():
                     current = current.setdefault(k, {})
                 current[keys[-1]] = try_convert(value)
 
-            save_config(app_state.config_path, new_config)
+            save_config(app_state.graph_config_path, new_config)
             flash('Configuration updated successfully!', 'success')
             
         except Exception as e:
@@ -36,7 +35,7 @@ def edit_config():
             
         return redirect(url_for('main.edit_config'))
 
-    config_data = load_config(app_state.config_path)
+    config_data = load_config(app_state.graph_config_path)
     return render_template('configEditor.html', config=config_data)
 
 

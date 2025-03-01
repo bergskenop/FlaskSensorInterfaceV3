@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from typing import Any, Dict, Union
+from app import app_state
 
 def try_convert(value: str) -> Union[int, float, str]:
     """Convert string values to appropriate numeric types if possible"""
@@ -47,7 +48,7 @@ def save_config(config_path: Union[str, Path], new_config: Dict[str, Any]) -> No
         # Save merged config
         with open(config_path, 'w') as f:
             json.dump(merged_config, f, indent=4)
-            
+
     except Exception as e:
         raise RuntimeError(f"Error saving configuration: {str(e)}")
 

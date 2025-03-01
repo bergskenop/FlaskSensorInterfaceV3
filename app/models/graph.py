@@ -11,14 +11,12 @@ class GraphConfig:
     min_y: float
     max_y: float
     max_rico: float
-    kp: float
-    ki: float
-    kd: float
 
 class Graph:
     """Main graph model replicating original helper.py functionality"""
-    def __init__(self, setpoints: List[Tuple[Union[int, float, str], Union[int, float, str]]], config_path="app/config/graph_config.json"):
+    def __init__(self, name, setpoints: List[Tuple[Union[int, float, str], Union[int, float, str]]], config_path="app/config/graph_config.json"):
         # Convert setpoints to float tuples
+        self.name = name
         self.setpoints = [(float(x), float(y)) for x, y in setpoints]
         self.config = self._load_config(Path(config_path))
         self.valid_dataset = self._validate_dataset()
@@ -28,16 +26,15 @@ class Graph:
         try:
             with open(config_path, 'r') as f:
                 config_data = json.load(f)
+                f.close()
                 return GraphConfig(
                     max_points=int(config_data["max_points"]["value"]),
                     min_x=float(config_data["min_x"]["value"]),
                     min_y=float(config_data["min_y"]["value"]),
                     max_y=float(config_data["max_y"]["value"]),
-                    max_rico=float(config_data["max_rico"]["value"]),
-                    kp=float(config_data["kp"]["value"]),
-                    ki=float(config_data["ki"]["value"]),
-                    kd=float(config_data["kd"]["value"])
+                    max_rico=float(config_data["max_rico"]["value"])
                 )
+
         except (FileNotFoundError, KeyError, json.JSONDecodeError, ValueError) as e:
             raise RuntimeError(f"Configuration error: {str(e)}")
 
