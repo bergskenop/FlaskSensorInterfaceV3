@@ -2,7 +2,7 @@
     "_comment": "This file contains the parameters for the graph used to set the desired temperature profile within the climate chamber.",
     "max_points": {
         "name": "max_points",
-        "value": 101,
+        "value": 100,
         "_comment": "Amount of points set by the user onto the graph."
     },
     "min_x": {

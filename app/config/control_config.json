@@ -2,7 +2,7 @@
   "_comment": "This file contains the parameters for the controlling stage within the climate chamber.",
   "sensor_read_delay": {
     "name": "sensor_read_delay",
-    "value": 2,
+    "value": 0.25,
     "unit": "seconds",
     "_comment": "Handles how fast temperature sensors are read out."
   },

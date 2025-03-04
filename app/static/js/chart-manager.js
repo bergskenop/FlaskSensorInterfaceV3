@@ -8,6 +8,8 @@ export default class ChartManager {
     this.sensorGraph = sensorGraph;
     this.chartInstance = null;
     this.maxElapsedSeconds = 0;
+    this.startTimeLineConfig = null;
+    this.isStartTimeLineVisible = false;
   }
 
   /**
@@ -18,7 +20,7 @@ export default class ChartManager {
   createChartConfig(config = {}) {
     const startTime = this.sensorGraph.startTime;
 
-    return {
+    const chartConfig = {
       type: 'line',
       data: {
         datasets: []
@@ -47,10 +49,15 @@ export default class ChartManager {
         plugins: {
           legend: {
             position: 'top'
+          },
+          annotation: {
+            annotations: {}
           }
         }
       }
     };
+
+    return chartConfig;
   }
 
   /**
@@ -111,6 +118,39 @@ export default class ChartManager {
   }
 
   /**
+   * Adds or updates a vertical line to mark the start time
+   * @param {number} elapsedSeconds - Elapsed time in seconds
+   */
+  updateStartTimeLine(elapsedSeconds) {
+    if (!this.chartInstance) return;
+
+    // If start time line doesn't exist, create it
+    if (!this.startTimeLineConfig) {
+      this.startTimeLineConfig = {
+        type: 'line',
+        xMin: elapsedSeconds,
+        xMax: elapsedSeconds,
+        borderColor: 'green',
+        borderWidth: 2,
+        display: this.isStartTimeLineVisible,
+        label: {
+          content: 'Start Time',
+          enabled: true,
+          position: 'start'
+        }
+      };
+      this.chartInstance.options.plugins.annotation.annotations.startTimeLine = this.startTimeLineConfig;
+    }
+    // Otherwise, update its position
+    else {
+      this.startTimeLineConfig.xMin = elapsedSeconds;
+      this.startTimeLineConfig.xMax = elapsedSeconds;
+    }
+
+    this.chartInstance.update();
+  }
+
+  /**
    * Clears all sensor data from the chart while preserving the desired path
    */
   clearChartData() {
@@ -119,6 +159,13 @@ export default class ChartManager {
       this.chartInstance.data.datasets = this.chartInstance.data.datasets.filter(
         dataset => dataset.label === 'Desired Graph'
       );
+
+      // Remove start time line
+      if (this.startTimeLineConfig) {
+        delete this.chartInstance.options.plugins.annotation.annotations.startTimeLine;
+        this.startTimeLineConfig = null;
+      }
+
       this.chartInstance.update();
     }
   }
@@ -194,6 +241,9 @@ export default class ChartManager {
         });
       }
     });
+
+    // Update start time line with current elapsed time
+    this.updateStartTimeLine(elapsedSeconds);
 
     this.chartInstance.update();
   }

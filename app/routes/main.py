@@ -56,6 +56,10 @@ def submit_temperature():
         flash('No temperature value provided', 'error')
         return redirect(url_for('main.index'))
 
+@main_bp.route('/manual-control')
+def manual_control():
+    return render_template('manualControl.html')
+
 def try_convert(value):
     """Convert string values to appropriate numeric types if possible"""
     try:

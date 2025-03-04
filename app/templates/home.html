@@ -24,6 +24,11 @@
                 <button type="submit" class="full-width">Set Constant Temperature</button>
             </form>
         </div>
+        <div class="additional-controls">
+        <a href="{{ url_for('main.manual_control') }}">
+            <button type="submit" class="full-width">Start manual control</button>
+        </a>
+    </div>
     </div>
 </div>
 {% endblock %}
