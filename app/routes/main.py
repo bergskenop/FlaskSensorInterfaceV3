@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from app import app_state
-from app.services.config import load_config, save_config
-from app.services.temperature import temperature_service
+from app.backend.services.config import load_config, save_config
+from app.backend.services.temperature import temperature_service
 
 main_bp = Blueprint('main', __name__)
 

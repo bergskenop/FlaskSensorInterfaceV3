@@ -1,6 +1,6 @@
-from app.models.interfaces.IClimateChamber import *
-from app.models.mock.MockGPIO import MockGPIO
-from app.models.mock.MockPWM import MockPWM
+from app.backend.models.interfaces.IClimateChamber import *
+from app.backend.models.mock.MockGPIO import MockGPIO
+from app.backend.models.mock.MockPWM import MockPWM
 
 class MockClimateChamber(IClimateChamber):
     _instance = None

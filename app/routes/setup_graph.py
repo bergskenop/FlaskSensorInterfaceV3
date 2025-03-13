@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, jsonify, redirect, url_for, request
 
-from app.services.config import load_config
+from app.backend.services.config import load_config
 from app import app_state
-from app.services.temperature import temperature_service
+from app.backend.services.temperature import temperature_service
 
 graph_bp = Blueprint('graph', __name__)
 

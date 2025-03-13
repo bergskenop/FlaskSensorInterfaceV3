@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Tuple, List, Dict, Any, Union
-from app.models.graph import Graph
-from app.services.config import load_config, get_config_value
+from app.backend.models.graph import Graph
+from app.backend.services.config import load_config, get_config_value
 from app import app_state
 
 @dataclass

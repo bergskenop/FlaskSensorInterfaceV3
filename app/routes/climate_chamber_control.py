@@ -9,7 +9,8 @@ sensor_bp = Blueprint('sensor', __name__)
 def stream():
     """Route that streams sensor data to the frontend using the ClimateChamberController instance."""
     app_state.controller.start_sensor_stream()  # Start the stream
-    return Response(app_state.controller.sensor_data_generator("app/config/sensor_data.json"), mimetype='text/event-stream')
+    #TODO stream is currently fed by sensor file, either feed real time sensor data into file or rework functionality
+    return Response(app_state.controller.sensor_data_generator(app_state.sensor_data_path), mimetype='text/event-stream')
 
 @sensor_bp.route('/start_sensors', methods=['POST'])
 def start_sensors():

@@ -1,4 +1,4 @@
-from app.models.interfaces.IClimateChamber import *
+from app.backend.models.interfaces.IClimateChamber import *
 
 # Real implementation
 class ClimateChamber(IClimateChamber):

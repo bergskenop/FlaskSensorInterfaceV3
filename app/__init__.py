@@ -1,6 +1,6 @@
 import os
 from flask import Flask
-import app.services.state as state
+import app.backend.services.state as state
 
 app_state = state.AppState()
 
@@ -9,7 +9,6 @@ def create_app():
     app.secret_key = os.urandom(24)
     app.config['JSON_AS_ASCII'] = False
 
-    # Absolute imports
     from app.routes.main import main_bp
     from app.routes.setup_graph import graph_bp
     from app.routes.climate_chamber_control import sensor_bp
