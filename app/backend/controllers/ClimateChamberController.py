@@ -1,6 +1,7 @@
 import json
 import time
 from datetime import datetime
+import asyncio
 
 class ClimateChamberController:
     """Handles the control logic of the climate chamber separately from hardware management."""
@@ -81,14 +82,17 @@ class ClimateChamberController:
 
     def sensor_data_generator(self, sensor_data_path):
         """Generator function for Server-Sent Events (SSE)."""
+        #TODO
+        # Generator is currently called by stream to supply it with sensor values.
+        # The stream object should rather start an separate task that starts the regulation process based on the provided desired graph (in app_state)
         delay = self.config.read_delay
+
         while self.running:
             try:
                 with open(sensor_data_path, 'r') as file:
                     data = json.load(file)
 
                 # If we have a desired temperature profile, apply control
-                #TODO First set start time, there is currently no reference as to what time has passed
                 if self.desired_graph and 'temperature' in data:
                     current_temp = data['ClimateChamber temperature']
                     target_temp = self.desired_graph.get_current_target()

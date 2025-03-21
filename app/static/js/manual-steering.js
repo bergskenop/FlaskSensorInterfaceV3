@@ -114,7 +114,7 @@ class SensorGraph {
 
     if (!this.isCycleRunning) {
       try {
-        const response = await fetch('/start_sensors', { method: 'POST' });
+        const response = await fetch('/start_cycle', { method: 'POST' });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -127,7 +127,7 @@ class SensorGraph {
         this.initializeStream();
         this.eventManager.addNavigationEventListeners();
       } catch (error) {
-        console.error("Error starting sensor stream:", error);
+        console.error("Error starting cycle stream:", error);
         this.isCycleRunning = false;
         cycleButton.textContent = 'Start Cycle';
       }
@@ -135,19 +135,19 @@ class SensorGraph {
       this.sensorManager.closeEventSource();
 
       try {
-        const response = await fetch('/stop_sensors', { method: 'POST' });
+        const response = await fetch('/stop_cycle', { method: 'POST' });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const result = await response.json();
-        console.log("Sensors stopped:", result);
+        console.log("Cycle stopped:", result);
 
         this.chartManager.clearChartData();
         this.isCycleRunning = false;
         cycleButton.textContent = 'Start Cycle';
         this.eventManager.removeNavigationEventListeners();
       } catch (error) {
-        console.error("Error stopping sensor stream:", error);
+        console.error("Error stopping cycle stream:", error);
       }
     }
   }
