@@ -18,8 +18,7 @@ class ClimateChamber(IClimateChamber):
             cls._instance = super(ClimateChamber, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, name, sensorModule=None, peltierModule=None, fanModule=None):
-        self.name = name
+    def __init__(self, sensorModule=None, peltierModule=None, fanModule=None):
         self.sensorModule = SensorModule()
         self.peltierModule = PeltierModule("Single", 12, 13)
         self.fanModule = FanModule(10)

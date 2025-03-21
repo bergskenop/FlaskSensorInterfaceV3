@@ -3,6 +3,11 @@ import ChartManager from './chart-manager.js';
 import SensorManager from './sensor-manager.js';
 import { formatTime } from './utils.js';
 
+document.querySelector('.vertical-form').addEventListener('submit', function(event) {
+  event.preventDefault();
+});
+
+
 /**
  * SensorGraph class coordinates the different managers to handle sensor data visualization
  */
@@ -56,24 +61,34 @@ class SensorGraph {
     const cycleButton = document.getElementById('StartCycle');
 
     if (!this.isCycleRunning) {
-      try {
-        const response = await fetch('/start_cycle', { method: 'POST' });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const result = await response.json();
-        console.log("Cycle started:", result);
+  try {
+    // Get custom cycle name if it exists
+    const cycleName = document.getElementById('cycleName')?.value || null;
 
-        this.chartManager.clearChartData();
-        this.isCycleRunning = true;
-        cycleButton.textContent = 'Stop Cycle';
-        this.initializeStream();
-        this.eventManager.addNavigationEventListeners();
-      } catch (error) {
-        console.error("Error starting sensor stream:", error);
-        this.isCycleRunning = false;
-        cycleButton.textContent = 'Start Cycle';
-      }
+    const response = await fetch('/start_cycle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ cycleName: cycleName })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    console.log("Cycle started:", result);
+
+    this.chartManager.clearChartData();
+    this.isCycleRunning = true;
+    cycleButton.textContent = 'Stop Cycle';
+    this.initializeStream();
+    this.eventManager.addNavigationEventListeners();
+  } catch (error) {
+    console.error("Error starting sensor stream:", error);
+    this.isCycleRunning = false;
+    cycleButton.textContent = 'Start Cycle';
+  }
     } else {
       this.sensorManager.closeEventSource();
 

@@ -51,7 +51,6 @@ def get_stored_graph_data():
         
     return jsonify({
         'desired_path': desired_path,
-        'data': app_state.data_points,
         'config': {
             'max_rico': config.get('max_rico', {}).get('value')
         }
