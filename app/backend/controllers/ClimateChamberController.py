@@ -3,11 +3,13 @@ import time
 from datetime import datetime
 import asyncio
 
+
 class ClimateChamberController:
     """Handles the control logic of the climate chamber separately from hardware management."""
 
-    def __init__(self, climate_chamber, config):
+    def __init__(self, app_state, climate_chamber, config):
         """Initialize the controller with the climate chamber instance and config."""
+        self.app_state = app_state
         self.chamber = climate_chamber
         self.config = config
         self.running = False
@@ -80,17 +82,18 @@ class ClimateChamberController:
         print("\nClimateChamberController: Sensor stream stopped.")
         self.chamber.stop_all()  # Ensure all actuators are off
 
-    def sensor_data_generator(self, sensor_data_path):
+    def sensor_data_provider(self):
         """Generator function for Server-Sent Events (SSE)."""
         #TODO
         # Generator is currently called by stream to supply it with sensor values.
         # The stream object should rather start an separate task that starts the regulation process based on the provided desired graph (in app_state)
-        delay = self.config.read_delay
 
         while self.running:
             try:
-                with open(sensor_data_path, 'r') as file:
-                    data = json.load(file)
+                data = self.app_state.database.read_sensors()
+
+                #with open(self.app_state.sensor_data_path, 'r') as file:
+                #    data = json.load(file)
 
                 # If we have a desired temperature profile, apply control
                 if self.desired_graph and 'temperature' in data:
@@ -107,6 +110,6 @@ class ClimateChamberController:
             except (FileNotFoundError, json.JSONDecodeError) as e:
                 yield f"data: {{\"error\": \"Failed to read sensor data: {str(e)}\"}}\n\n"
 
-            time.sleep(delay)
+            time.sleep(self.app_state.provider_interval)
 
         yield "data: {\"status\": \"stopped\"}\n\n"  # Send final message before stopping

@@ -41,7 +41,7 @@ export default class EventManager {
     if (this.sensorGraph.isCycleRunning) {
       // Use sendBeacon which is designed specifically for analytics
       // data on page unload. It's more reliable than fetch/XHR in unload events.
-      navigator.sendBeacon('/stop_sensors', JSON.stringify({}));
+      navigator.sendBeacon('/stop_cycle', JSON.stringify({}));
 
       // Close the EventSource if it exists
       this.sensorGraph.sensorManager.closeEventSource();

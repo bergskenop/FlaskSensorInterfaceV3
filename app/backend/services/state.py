@@ -2,7 +2,6 @@ from threading import Lock
 from pathlib import Path
 import os
 
-
 class AppState:
     """Global singleton for project-wide state management."""
     _instance = None
@@ -25,7 +24,8 @@ class AppState:
         self.desired_flow_graph = None
         self.desired_flow_points = None
         self.start_time = None
-
+        self.read_interval = 0.1
+        self.provider_interval = 1
         # Paths
         self.config_dir = Path('app/backend/config')
         self.graph_config_path = self.config_dir / 'graph_config.json'
@@ -36,9 +36,18 @@ class AppState:
         os.makedirs(self.config_dir, exist_ok=True)
 
         # Create components using the factory
+        """ Database instance used to log, retrieve and delete sensors """
+        self.database = self._create_temperature_logger()
+        """ Config manager instance """
         self.config_manager = self._create_config_manager()
+        """ Climate chamber controller used to control Peltier elements based on sensor data and desired graph."""
         self.climate_chamber = self._create_climate_chamber()
         self.controller = self._create_controller()
+
+    def _create_temperature_logger(self):
+        """Factory method for creating the config manager."""
+        from database.TemperatureSensorLogger import TemperatureSensorLogger
+        return TemperatureSensorLogger(self)
 
     def _create_config_manager(self):
         """Factory method for creating the config manager."""
@@ -59,6 +68,7 @@ class AppState:
         """Factory method for creating the controller."""
         from app.backend.controllers.ClimateChamberController import ClimateChamberController
         return ClimateChamberController(
+            self,
             self.climate_chamber,
             self.config_manager.pid_config
         )
